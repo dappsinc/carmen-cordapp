@@ -105,8 +105,8 @@ dependencies {
 
 cordapp {
     info {
-        name "CorDapp Template"
-        vendor "Corda Open Source"
+        name "Carmen CRM"
+        vendor "Dapps Incorporated"
         targetPlatformVersion corda_platform_version.toInteger()
         minimumPlatformVersion corda_platform_version.toInteger()
     }
