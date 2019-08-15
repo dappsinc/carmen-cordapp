@@ -23,7 +23,7 @@ data class Case(val caseId: String,
                 val casePriority: CasePriority,
                 val submitter: Party,
                 val resolver: Party,
-                override val linearId: UniqueIdentifier = UniqueIdentifier()) : LinearState, QueryableState {
+                override val linearId: UniqueIdentifier = UniqueIdentifier()) : LinearState, ContractState, QueryableState {
 
 
     override val participants = listOf(submitter, resolver)
@@ -95,7 +95,7 @@ class CaseContract : Contract {
                 val caseInput = caseInputs.single()
                 val caseOutput = caseOutputs.single()
                 // "the status should be set to started" using (caseOutput.caseStatus == CaseStatus.STARTED)
-                //  "the previous status should not be STARTED" using (caseInput.caseStatus != CaseStatus.STARTED)
+                "the previous status should not be STARTED" using (caseInput.caseStatus != CaseStatus.STARTED)
                 //  "only the job status should change" using (caseOutput == caseInput.copy(caseStatus = CaseStatus.STARTED))
                 "the submitter and resolver are required signers" using
                         (caseCommand.signers.containsAll(listOf(caseOutput.resolver.owningKey, caseOutput.submitter.owningKey)))
@@ -104,9 +104,6 @@ class CaseContract : Contract {
             is Commands.CloseCase -> requireThat {
                 "one input should be produced" using (caseInputs.size == 1)
                 "one output should be produced" using (caseOutputs.size == 1)
-
-                val caseInput = caseInputs.single()
-                val caseOutput = caseOutputs.single()
 
                 //    "the input status must be set as started" using (caseInputs.single().caseStatus == CaseStatus.STARTED)
                 //   "the output status should be set as finished" using (caseOutputs.single().caseStatus == CaseStatus.CLOSED)

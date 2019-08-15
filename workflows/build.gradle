@@ -13,31 +13,6 @@ cordapp {
     }
 }
 
-sourceSets {
-    main {
-        resources {
-            srcDir rootProject.file("config/dev")
-        }
-    }
-    test {
-        resources {
-            srcDir rootProject.file("config/test")
-        }
-    }
-    integrationTest {
-        kotlin {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-            srcDir file('src/integrationTest/kotlin')
-        }
-    }
-}
-
-configurations {
-    integrationTestCompile.extendsFrom testCompile
-    integrationTestRuntime.extendsFrom testRuntime
-}
-
 dependencies {
 
     cordapp project(":contracts")
@@ -74,13 +49,6 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: [':server:jar']) {
         // Automatically run at least a single, multi-node Spring Boot instance
         webPort 8080
         webserverJar = "${rootProject.projectDir}/server/build/libs/server-${project.version}.jar"
-        extraConfig = [
-                'dataSourceProperties.dataSource.url' : 'jdbc:postgresql://35.244.12.49/postgres',
-                'dataSourceProperties.dataSourceClassName' : 'org.postgresql.ds.PGSimpleDataSource',
-                'dataSourceProperties.dataSource.user' : 'postgres',
-                'dataSourceProperties.dataSource.password' : 'bberwtoi8',
-                'jarDirs' : [ '/usr/share/java/postgresql-jdbc' ]
-        ]
     }
     node {
         name "O=PartyB,L=New York,C=US"
@@ -94,14 +62,6 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: [':server:jar']) {
         //webserverJar = "${rootProject.projectDir}/server/build/libs/server-${project.version}.jar"
         //cordapps = []
         rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
-        extraConfig = [
-                'dataSourceProperties.dataSource.url' : 'jdbc:postgresql://35.244.12.49/postgres',
-                'dataSourceProperties.dataSourceClassName' : 'org.postgresql.ds.PGSimpleDataSource',
-                'dataSourceProperties.dataSource.user' : 'sa',
-                'dataSourceProperties.dataSource.password' : 'mysecretpassword',
-                'jarDirs' : [ '/usr/share/java/postgresql-jdbc' ]
-        ]
-
     }
     node {
         name "O=PartyC,L=San Francisco,C=US"
@@ -115,12 +75,5 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: [':server:jar']) {
         //webserverJar = "${rootProject.projectDir}/server/build/libs/server-${project.version}.jar"
         //cordapps = []
         rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
-        extraConfig = [
-                'dataSourceProperties.dataSource.url' : 'jdbc:postgresql://35.244.12.49/postgres',
-                'dataSourceProperties.dataSourceClassName' : 'org.postgresql.ds.PGSimpleDataSource',
-                'dataSourceProperties.dataSource.user' : 'sa',
-                'dataSourceProperties.dataSource.password' : 'mysecretpassword',
-                'jarDirs' : [ '/usr/share/java/postgresql-jdbc' ]
-        ]
     }
 }

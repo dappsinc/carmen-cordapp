@@ -37,7 +37,6 @@ class Chat : Contract {
 
     override fun verify(tx: LedgerTransaction) {
         val signers: List<PublicKey> = tx.commandsOfType<SendMessageCommand>().single().signers
-        val message: Message = tx.outputsOfType<Message>().single()
         requireThat {
             "Only one output state should be created when replying to a message." using (tx.outputs.size == 1)
             val output = tx.outputsOfType<Message>().single()

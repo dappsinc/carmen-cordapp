@@ -38,7 +38,6 @@ import java.time.format.FormatStyle
 
 
 object CreateAccountFlow {
-    @Suspendable
     @InitiatingFlow
     @StartableByRPC
     class Controller(val accountId: String,
@@ -79,56 +78,39 @@ object CreateAccountFlow {
             // Stage 1.
             progressTracker.currentStep = GENERATING_TRANSACTION
 
-
-            // Generate an unsigned transaction.
-            val me = ourIdentityAndCert.party
             // Generate an unsigned transaction.
             val accountState = Account(accountId, accountName, accountType, industry, phone, serviceHub.myInfo.legalIdentities.first(), processor)
             val txCommand = Command(AccountContract.Commands.CreateAccount(), accountState.participants.map { it.owningKey })
             val txBuilder = TransactionBuilder(notary = notary)
-                    .addOutputState(accountState, ACCOUNT_CONTRACT_ID)
-                    .addCommand(txCommand)
-
-            // Stage 2.
-            progressTracker.currentStep = VERIFYING_TRANSACTION
-
-            // Verify that the transaction is valid.
-            txBuilder.verify(serviceHub)
-
-            // Stage 3.
-            progressTracker.currentStep = SIGNING_TRANSACTION
-
-            val signedTx = serviceHub.signInitialTransaction(txBuilder)
-
-            // Notarise and record the transaction in both parties' vaults.
-            subFlow(FinalityFlow(signedTx))
-
+                    txBuilder.addOutputState(accountState, ACCOUNT_CONTRACT_ID)
+                    txBuilder.addCommand(txCommand)
 
             val partSignedTx = serviceHub.signInitialTransaction(txBuilder)
 
-            progressTracker.currentStep = GATHERING_SIGS
+
             val otherPartyFlow = initiateFlow(processor)
             val fullySignedTx = subFlow(CollectSignaturesFlow(partSignedTx, setOf(otherPartyFlow), GATHERING_SIGS.childProgressTracker()))
-            return subFlow(FinalityFlow(fullySignedTx, FINALISING_TRANSACTION.childProgressTracker()))
+
+            // Finalising the transaction.
+            return subFlow(FinalityFlow(fullySignedTx, listOf(otherPartyFlow), FINALISING_TRANSACTION.childProgressTracker()))
         }
     }
 
 
     @InitiatedBy(Controller::class)
     class AccountProcessor(val otherPartySession: FlowSession) : FlowLogic<SignedTransaction>() {
-
         @Suspendable
         override fun call(): SignedTransaction {
             val signTransactionFlow = object : SignTransactionFlow(otherPartySession) {
                 override fun checkTransaction(stx: SignedTransaction) = requireThat {
                     val output = stx.tx.outputs.single().data
                     "This must be an Account transaction." using (output is Account)
-                    val account = output as Account
                 }
             }
 
-            val signedTransaction = subFlow(signTransactionFlow)
-            return subFlow(ReceiveFinalityFlow(otherSideSession = otherPartySession, expectedTxId = signedTransaction.id))
+            val txId = subFlow(signTransactionFlow).id
+
+            return subFlow(ReceiveFinalityFlow(otherPartySession, expectedTxId = txId))
         }
     }
 }
@@ -141,7 +123,6 @@ object CreateAccountFlow {
 // *********
 
 object CreateContactFlow {
-    @Suspendable
     @InitiatingFlow
     @StartableByRPC
     class Controller(val contactId: String,
@@ -186,24 +167,17 @@ object CreateContactFlow {
             val contactState = Contact(contactId, firstName, lastName, email, phone, serviceHub.myInfo.legalIdentities.first(), processor)
             val txCommand = Command(ContactContract.Commands.CreateContact(), contactState.participants.map { it.owningKey })
             val txBuilder = TransactionBuilder(notary = notary)
-                    .addOutputState(contactState, CONTACT_CONTRACT_ID)
-                    .addCommand(txCommand)
+                    txBuilder.addOutputState(contactState, CONTACT_CONTRACT_ID)
+                    txBuilder.addCommand(txCommand)
 
-            // Stage 2.
-            progressTracker.currentStep = VERIFYING_TRANSACTION
-
-            // Verify that the transaction is valid.
-            txBuilder.verify(serviceHub)
-            // Sign the transaction.
-
-            progressTracker.currentStep = SIGNING_TRANSACTION
             val partSignedTx = serviceHub.signInitialTransaction(txBuilder)
 
 
-            progressTracker.currentStep = GATHERING_SIGS
             val otherPartyFlow = initiateFlow(processor)
             val fullySignedTx = subFlow(CollectSignaturesFlow(partSignedTx, setOf(otherPartyFlow), GATHERING_SIGS.childProgressTracker()))
-            return subFlow(FinalityFlow(fullySignedTx, FINALISING_TRANSACTION.childProgressTracker()))
+
+            // Finalising the transaction.
+            return subFlow(FinalityFlow(fullySignedTx, listOf(otherPartyFlow)))
         }
     }
 
@@ -216,12 +190,12 @@ object CreateContactFlow {
                 override fun checkTransaction(stx: SignedTransaction) = requireThat {
                     val output = stx.tx.outputs.single().data
                     "This must be an Contact transaction." using (output is Contact)
-                    val contact = output as Contact
                 }
             }
 
-            val signedTransaction = subFlow(signTransactionFlow)
-            return subFlow(ReceiveFinalityFlow(otherSideSession = otherPartySession, expectedTxId = signedTransaction.id))
+            val txId = subFlow(signTransactionFlow).id
+
+            return subFlow(ReceiveFinalityFlow(otherPartySession, expectedTxId = txId))
         }
     }
 }
@@ -230,7 +204,6 @@ object CreateContactFlow {
 
 
 object CreateLeadFlow {
-    @Suspendable
     @InitiatingFlow
     @StartableByRPC
     class Controller(val leadId: String,
@@ -278,22 +251,17 @@ object CreateLeadFlow {
             val leadState = Lead(leadId, firstName, lastName, company, title, email, phone, country, serviceHub.myInfo.legalIdentities.first(), processor)
             val txCommand = Command(LeadContract.Commands.CreateLead(), leadState.participants.map { it.owningKey })
             val txBuilder = TransactionBuilder(notary = notary)
-                    .addOutputState(leadState, LEAD_CONTRACT_ID)
-                    .addCommand(txCommand)
+                    txBuilder.addOutputState(leadState, LEAD_CONTRACT_ID)
+                    txBuilder.addCommand(txCommand)
 
-            // Stage 2.
-            progressTracker.currentStep = VERIFYING_TRANSACTION
-
-            txBuilder.verify(serviceHub)
-            // Sign the transaction.
-            progressTracker.currentStep = SIGNING_TRANSACTION
             val partSignedTx = serviceHub.signInitialTransaction(txBuilder)
 
 
-            progressTracker.currentStep = GATHERING_SIGS
             val otherPartyFlow = initiateFlow(processor)
             val fullySignedTx = subFlow(CollectSignaturesFlow(partSignedTx, setOf(otherPartyFlow), GATHERING_SIGS.childProgressTracker()))
-            return subFlow(FinalityFlow(fullySignedTx, FINALISING_TRANSACTION.childProgressTracker()))
+
+            // Finalising the transaction.
+            return subFlow(FinalityFlow(fullySignedTx, listOf(otherPartyFlow)))
         }
     }
 
@@ -306,12 +274,12 @@ object CreateLeadFlow {
                 override fun checkTransaction(stx: SignedTransaction) = requireThat {
                     val output = stx.tx.outputs.single().data
                     "This must be an Contact transaction." using (output is Lead)
-                    val lead = output as Lead
                 }
             }
 
-            val signedTransaction = subFlow(signTransactionFlow)
-            return subFlow(ReceiveFinalityFlow(otherSideSession  = otherPartySession, expectedTxId = signedTransaction.id))
+            val txId = subFlow(signTransactionFlow).id
+
+            return subFlow(ReceiveFinalityFlow(otherPartySession, expectedTxId = txId))
         }
     }
 }
@@ -322,7 +290,6 @@ object CreateLeadFlow {
 // *********
 
 object CreateCaseFlow {
-    @Suspendable
     @InitiatingFlow
     @StartableByRPC
     @CordaSerializable
@@ -368,27 +335,19 @@ object CreateCaseFlow {
             val caseState = Case(caseId, description, caseNumber, caseStatus, casePriority, serviceHub.myInfo.legalIdentities.first(), resolver)
             val txCommand = Command(CaseContract.Commands.SubmitCase(), caseState.participants.map { it.owningKey })
             val txBuilder = TransactionBuilder(notary = notary)
-                    .addOutputState(caseState, CASE_CONTRACT_ID)
-                    .addCommand(txCommand)
+                    txBuilder.addOutputState(caseState, CASE_CONTRACT_ID)
+                    txBuilder.addCommand(txCommand)
 
-            // Stage 2.
-            progressTracker.currentStep = VERIFYING_TRANSACTION
-
-            // Verify that the transaction is valid.
-            txBuilder.verify(serviceHub)
-            // Sign the transaction.
-
-            progressTracker.currentStep = SIGNING_TRANSACTION
             val partSignedTx = serviceHub.signInitialTransaction(txBuilder)
 
 
-            progressTracker.currentStep = GATHERING_SIGS
             val otherPartyFlow = initiateFlow(resolver)
             val fullySignedTx = subFlow(CollectSignaturesFlow(partSignedTx, setOf(otherPartyFlow), GATHERING_SIGS.childProgressTracker()))
-            return subFlow(FinalityFlow(fullySignedTx, FINALISING_TRANSACTION.childProgressTracker()))
+
+            // Finalising the transaction.
+            return subFlow(FinalityFlow(fullySignedTx, listOf(otherPartyFlow)))
         }
     }
-
 
     @InitiatedBy(Initiator::class)
     class Acceptor(val otherPartySession: FlowSession) : FlowLogic<SignedTransaction>() {
@@ -398,12 +357,12 @@ object CreateCaseFlow {
                 override fun checkTransaction(stx: SignedTransaction) = requireThat {
                     val output = stx.tx.outputs.single().data
                     "This must be an Contact transaction." using (output is Case)
-                    val case = output as Case
                 }
             }
 
-            val signedTransaction = subFlow(signTransactionFlow)
-            return subFlow(ReceiveFinalityFlow(otherSideSession = otherPartySession, expectedTxId = signedTransaction.id))
+            val txId = subFlow(signTransactionFlow).id
+
+            return subFlow(ReceiveFinalityFlow(otherPartySession, expectedTxId = txId))
         }
     }
 }
@@ -486,47 +445,5 @@ class SendMessage(private val to: Party, private val userId: String, private val
     }
 
 }
-
-
-/**
-
-@StartableByRPC
-@StartableByService
-@InitiatingFlow
-class ShareAccountInfoWithNodes(val account: StateAndRef<Account>, val others: List<Party>) : FlowLogic<Unit>() {
-
-@Suspendable
-override fun call() {
-val txToSend = serviceHub.validatedTransactions.getTransaction(account.ref.txhash)
-txToSend?.let {
-for (other in others) {
-val session = initiateFlow(other)
-subFlow(SendTransactionFlow(session, txToSend))
-val certificate = serviceHub.identityService.certificateFromKey(account.state.data.signingKey)
-session.send(certificate!!)
-}
-}
-}
-
-}
-
-@InitiatedBy(ShareAccountInfoWithNodes::class)
-class GetAccountInfo(val otherSession: FlowSession) : FlowLogic<Unit>(){
-@Suspendable
-override fun call() {
-val receivedAccount =
-subFlow(ReceiveTransactionFlow(otherSession, statesToRecord = StatesToRecord.ALL_VISIBLE)).coreTransaction.outputsOfType(Account::class.java).singleOrNull()
-val partyAndCertificate = otherSession.receive(PartyAndCertificate::class.java).unwrap { it }
-receivedAccount?.let { account ->
-serviceHub.withEntityManager {
-persist(PublicKeyHashToExternalId(account.accountId, account.signingKey))
-}
-serviceHub.identityService.verifyAndRegisterIdentity(partyAndCertificate)
-}
-}
-
-}
-
- **/
 
 

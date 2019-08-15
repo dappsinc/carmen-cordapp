@@ -39,7 +39,6 @@ class CarmenService(
 
         val matches = proxy.partiesFromName(to, exactMatch = true)
         logger.debug("sendMessage, peers: {}", this.peers())
-        logger.debug("sendMessage, peer names: {}", this.peerNames())
         logger.debug("sendMessage, target: {}, matches: {}", to, matches)
 
         val to: Party = when {
@@ -57,7 +56,6 @@ class CarmenService(
 
         val matches = proxy.partiesFromName(processor, exactMatch = true)
         logger.debug("createAccount, peers: {}", this.peers())
-        logger.debug("createAccount, peer names: {}", this.peerNames())
         logger.debug("createAccount, target: {}, matches: {}", processor, matches)
 
         val processor: Party = when {
@@ -76,7 +74,6 @@ class CarmenService(
 
         val matches = proxy.partiesFromName(processor, exactMatch = true)
         logger.debug("sendMessage, peers: {}", this.peers())
-        logger.debug("sendMessage, peer names: {}", this.peerNames())
         logger.debug("sendMessage, target: {}, matches: {}", processor, matches)
 
         val processor: Party = when {
@@ -95,7 +92,6 @@ class CarmenService(
 
         val matches = proxy.partiesFromName(processor, exactMatch = true)
         logger.debug("sendMessage, peers: {}", this.peers())
-        logger.debug("sendMessage, peer names: {}", this.peerNames())
         logger.debug("sendMessage, target: {}, matches: {}", processor, matches)
 
         val processor: Party = when {
@@ -114,7 +110,6 @@ class CarmenService(
 
         val matches = proxy.partiesFromName(resolver, exactMatch = true)
         logger.debug("sendMessage, peers: {}", this.peers())
-        logger.debug("sendMessage, peer names: {}", this.peerNames())
         logger.debug("sendMessage, target: {}, matches: {}", resolver, matches)
 
         val resolver: Party = when {

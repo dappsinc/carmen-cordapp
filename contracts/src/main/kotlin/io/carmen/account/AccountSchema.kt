@@ -45,13 +45,10 @@ object AccountSchemaV1 : MappedSchema(AccountSchema.javaClass, 1, listOf(Persist
             var controller: String,
 
             @Column(name = "processor")
-            var processor: String,
-
-            @Column(name = "linearId")
-            var linearId: String
+            var processor: String
 
     ) : PersistentState() {
-        constructor() : this("default-constructor-required-for-hibernate", "", "", "", "", "", "", "")
+        constructor() : this("default-constructor-required-for-hibernate", "", "", "", "", "", "")
     }
 
 }

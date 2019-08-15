@@ -58,10 +58,10 @@ import io.carmen.lead.*
  * Carmen API Endpoints
  */
 
-@CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network"])
+@CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network", "localhost:8080"])
 @RestController
 @RequestMapping("/api/{nodeName}")
-class RestController() {
+class CarmenController() {
 
     companion object {
         private val logger = LoggerFactory.getLogger(RestController::class.java)
@@ -92,19 +92,6 @@ class RestController() {
     }
 
 
-    private inline fun <reified U : ContractState> getState(
-            services: ServiceHub,
-            block: (generalCriteria: QueryCriteria.VaultQueryCriteria) -> QueryCriteria
-    ): List<StateAndRef<U>> {
-        val query = builder {
-            val generalCriteria = QueryCriteria.VaultQueryCriteria(Vault.StateStatus.UNCONSUMED)
-            block(generalCriteria)
-        }
-        val result = services.vaultService.queryBy<U>(query)
-        return result.states
-    }
-
-
     /** Maps an Account to a JSON object. */
 
     private fun Account.toJson(): Map<String, String> {
@@ -115,8 +102,7 @@ class RestController() {
                 "industry" to industry,
                 "phone" to phone,
                 "controller" to controller.name.organisation,
-                "processor" to processor.name.organisation,
-                "linearId" to linearId.toString())
+                "processor" to processor.name.organisation)
     }
 
 
@@ -184,7 +170,7 @@ class RestController() {
     /** Returns a list of existing Messages. */
 
     @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @GetMapping(value = "/getMessages", produces = arrayOf("application/json"))
+    @GetMapping( "/getMessages", produces = arrayOf("application/json"))
     @ApiOperation(value = "Get Baton Messages")
     fun getMessages(@PathVariable nodeName: Optional<String>): List<Map<String, String>> {
         val messageStateAndRefs = this.getService(nodeName).proxy().vaultQueryBy<Chat.Message>().states
@@ -196,7 +182,7 @@ class RestController() {
     /** Get Messages by UserId */
 
     @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @GetMapping(value = "/getMessages/userId", produces = arrayOf("application/json"))
+    @GetMapping("/getMessages/userId", produces = arrayOf("application/json"))
     @ApiOperation(value = "Get Baton Messages by userId")
     fun getMessagesByUserId(@PathVariable nodeName: Optional<String>): List<Map<String, String>> {
         val messageStateAndRefs = this.getService(nodeName).proxy().vaultQueryBy<Chat.Message>().states
@@ -208,7 +194,7 @@ class RestController() {
     /** Returns a list of received Messages. */
 
     @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @GetMapping(value = "/getReceivedMessages", produces = arrayOf("application/json"))
+    @GetMapping("/getReceivedMessages", produces = arrayOf("application/json"))
     @ApiOperation(value = "Get Received Baton Messages")
     fun getRecievedMessages(@PathVariable nodeName: Optional<String>): List<Map<String, String>> {
         val messageStateAndRefs = this.getService(nodeName).proxy().vaultQueryBy<Chat.Message>().states
@@ -219,7 +205,7 @@ class RestController() {
     /** Returns a list of Sent Messages. */
 
     @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @GetMapping(value = "/getSentMessages", produces = arrayOf("application/json"))
+    @GetMapping("/getSentMessages", produces = arrayOf("application/json"))
     @ApiOperation(value = "Get Sent Baton Messages")
     fun getSentMessages(@PathVariable nodeName: Optional<String>): List<Map<String, String>> {
         val messageStateAndRefs = this.getService(nodeName).proxy().vaultQueryBy<Chat.Message>().states
@@ -232,7 +218,7 @@ class RestController() {
 
 
     @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @PostMapping(value = "/sendMessage")
+    @PostMapping("/sendMessage")
     @ApiOperation(value = "Send a message to the target party")
     fun sendMessage(@PathVariable nodeName: Optional<String>,
                     @ApiParam(value = "The target party for the message")
@@ -241,18 +227,6 @@ class RestController() {
                     @RequestParam(required = true) userId: String,
                     @ApiParam(value = "The message text")
                     @RequestParam("body") body: String): ResponseEntity<Any?> {
-
-        if (body == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'body' can not be null.\n")
-        }
-
-        if (to == null) {
-            return ResponseEntity.status(TSResponse.BAD_REQUEST).body("Query parameter 'recipient' missing or has wrong format.\n")
-        }
-
-        if (userId == null) {
-            return ResponseEntity.status(TSResponse.BAD_REQUEST).body("Query parameter 'userId' missing or has wrong format.\n")
-        }
 
 
         val (status, message) = try {
@@ -276,10 +250,12 @@ class RestController() {
 
     /** Returns a list of existing Accounts. */
 
-    @GetMapping(value = "/getAccounts", produces = arrayOf("application/json"))
+
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network", "localhost:8080"])
+    @GetMapping("/getAccounts")
     @ApiOperation(value = "Get Accounts")
     fun getAccounts(@PathVariable nodeName: Optional<String>): List<Map<String, String>> {
-        val accountStateAndRefs = this.getService(nodeName).proxy().vaultQueryBy<Account>().states
+        val accountStateAndRefs = this.getService(nodeName).proxy().vaultQuery(Account::class.java).states
         val accountStates = accountStateAndRefs.map { it.state.data }
         return accountStates.map { it.toJson() }
     }
@@ -289,11 +265,11 @@ class RestController() {
 
     /** Returns a list of existing Contacts. */
 
-    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @GetMapping(value = "/getContacts", produces = arrayOf("application/json"))
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network", "localhost:8080"])
+    @GetMapping("/getContacts")
     @ApiOperation(value = "Get Contacts")
     fun getContacts(@PathVariable nodeName: Optional<String>): List<Map<String, String>> {
-        val contactStateAndRefs = this.getService(nodeName).proxy().vaultQueryBy<Contact>().states
+        val contactStateAndRefs = this.getService(nodeName).proxy().vaultQuery(Contact::class.java).states
         val contactStates = contactStateAndRefs.map { it.state.data }
         return contactStates.map { it.toJson() }
     }
@@ -303,11 +279,11 @@ class RestController() {
 
     /** Returns a list of existing Leads. */
 
-    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @GetMapping(value = "/getLeads", produces = arrayOf("application/json"))
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network", "localhost:8080"])
+    @GetMapping("/getLeads")
     @ApiOperation(value = "Get Leads")
     fun getLeads(@PathVariable nodeName: Optional<String>): List<Map<String, String>> {
-        val leadStateAndRefs = this.getService(nodeName).proxy().vaultQueryBy<Lead>().states
+        val leadStateAndRefs = this.getService(nodeName).proxy().vaultQuery(Lead::class.java).states
         val leadStates = leadStateAndRefs.map { it.state.data }
         return leadStates.map { it.toJson() }
     }
@@ -316,11 +292,11 @@ class RestController() {
 
     /** Returns a list of existing Cases. */
 
-    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @GetMapping(value = "/getCases", produces = arrayOf("application/json"))
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network", "localhost:8080"])
+    @GetMapping("/getCases")
     @ApiOperation(value = "Get Cases")
     fun getCases(@PathVariable nodeName: Optional<String>): List<Map<String, String>> {
-        val caseStateAndRefs = this.getService(nodeName).proxy().vaultQueryBy<Case>().states
+        val caseStateAndRefs = this.getService(nodeName).proxy().vaultQuery(Case::class.java).states
         val caseStates = caseStateAndRefs.map { it.state.data }
         return caseStates.map { it.toJson() }
     }
@@ -329,8 +305,8 @@ class RestController() {
     /** Creates an Account. */
 
 
-    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @PostMapping(value = "/createAccount")
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network", "localhost:8080"])
+    @PostMapping("/createAccount")
     @ApiOperation(value = "Create Account")
     fun createAccount(@PathVariable nodeName: Optional<String>,
                       @RequestParam("accountId") accountId: String,
@@ -366,8 +342,8 @@ class RestController() {
 
     /** Creates a Contact. */
 
-    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @PostMapping(value = "/createContact")
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network", "localhost:8080"])
+    @PostMapping("/createContact")
     @ApiOperation(value = "Create Contact")
     fun createContact(@PathVariable nodeName: Optional<String>,
                       @RequestParam("contactId") contactId: String,
@@ -404,8 +380,8 @@ class RestController() {
     /** Creates a Lead. */
 
 
-    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @PostMapping(value = "/createLead")
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network", "localhost:8080"])
+    @PostMapping("/createLead")
     @ApiOperation(value = "Create Lead")
     fun createLead(@PathVariable nodeName: Optional<String>,
                    @RequestParam("leadId") leadId: String,
@@ -443,8 +419,8 @@ class RestController() {
 
     /** Creates a Case. */
 
-    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network"])
-    @PostMapping(value = "/createCase")
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network", "localhost:8080"])
+    @PostMapping("/createCase")
     @ApiOperation(value = "Create Case")
     fun createCase(@PathVariable nodeName: Optional<String>,
                    @RequestParam("caseId") caseId: String,

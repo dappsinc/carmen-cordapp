@@ -38,6 +38,8 @@ dependencies {
     compile "net.corda:corda-jackson:$corda_release_version"
     compile "net.corda:corda-rpc:$corda_release_version"
     //runtime "net.corda:corda:$corda_release_version"
+
+
     // JSON API
     compile "javax.json:javax.json-api:1.1.3"
     // Springfox/swagger

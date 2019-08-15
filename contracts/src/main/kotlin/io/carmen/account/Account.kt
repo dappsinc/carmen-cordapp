@@ -37,8 +37,7 @@ data class Account(val accountId: String,
                    val industry: String,
                    val phone: String,
                    val controller: Party,
-                   val processor: Party,
-                   override val linearId: UniqueIdentifier = UniqueIdentifier()) : LinearState, QueryableState {
+                   val processor: Party ) : ContractState, QueryableState {
 
 
     override val participants: List<AbstractParty> get() = listOf(controller, processor)
@@ -54,8 +53,7 @@ data class Account(val accountId: String,
                     industry = this.industry,
                     phone = this.phone,
                     controller = this.controller.toString(),
-                    processor = this.processor.toString(),
-                    linearId = this.linearId.toString()
+                    processor = this.processor.toString()
             )
             else -> throw IllegalArgumentException("Unrecognised schema $schema")
         }
@@ -72,7 +70,6 @@ class AccountContract : Contract {
         class CreateAccount : TypeOnlyCommandData(), Commands
         class TransferAccount : TypeOnlyCommandData(), Commands
         class ShareAccount : TypeOnlyCommandData(), Commands
-        class UpdateAccount : TypeOnlyCommandData(), Commands
         class DeleteAccount : TypeOnlyCommandData(), Commands
 
 
@@ -85,7 +82,6 @@ class AccountContract : Contract {
             is Commands.CreateAccount -> verifyCreate(tx, setOfSigners)
             is Commands.TransferAccount -> verifyTransfer(tx, setOfSigners)
             is Commands.ShareAccount -> verifyShare(tx, setOfSigners)
-            is Commands.UpdateAccount -> verifyUpdate(tx, setOfSigners)
             is Commands.DeleteAccount -> verifyDelete(tx, setOfSigners)
             else -> throw IllegalArgumentException("Unrecognised command.")
         }
@@ -120,14 +116,6 @@ class AccountContract : Contract {
         "Only one Account should be shared." using (tx.outputStates.size == 1)
         val output = tx.outputsOfType<Account>().single()
         "Owner only may sign the Account share transaction." using (output.controller.owningKey in signers)
-    }
-
-
-    private fun verifyUpdate(tx: LedgerTransaction, signers: Set<PublicKey>) = requireThat {
-        "No inputs must be consumed." using (tx.inputStates.size == 1)
-        "Only one out state should be created." using (tx.outputStates.size == 1)
-        val output = tx.outputsOfType<Account>().single()
-        "Owner only may sign the Account issue transaction." using (output.controller.owningKey in signers)
     }
 
 

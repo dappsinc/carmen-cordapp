@@ -22,13 +22,17 @@ buildscript {
         partiture_version = '0.5'
         slf4j_version = '1.7.25'
         log4j_version = '2.11.2'
+        tokens_release_version = '1.0'
+        tokens_release_group = 'com.r3.corda.lib.tokens'
     }
 
     repositories {
         mavenLocal()
         mavenCentral()
         jcenter()
-        maven { url 'https://ci-artifactory.corda.r3cev.com/artifactory/corda' }    
+        maven { url 'https://ci-artifactory.corda.r3cev.com/artifactory/corda' }
+        maven { url 'https://ci-artifactory.corda.r3cev.com/artifactory/corda-lib' }
+        maven { url 'https://ci-artifactory.corda.r3cev.com/artifactory/corda-lib-dev' }
     }
 
     dependencies {
@@ -101,66 +105,4 @@ dependencies {
     cordaCompile "org.apache.logging.log4j:log4j-slf4j-impl:${log4j_version}"
     cordaCompile "org.apache.logging.log4j:log4j-web:${log4j_version}"
     cordaCompile "org.slf4j:jul-to-slf4j:$slf4j_version"
-}
-
-cordapp {
-    info {
-        name "Carmen CRM"
-        vendor "Dapps Incorporated"
-        targetPlatformVersion corda_platform_version.toInteger()
-        minimumPlatformVersion corda_platform_version.toInteger()
-    }
-}
-
-task deployNodes(type: net.corda.plugins.Cordform, dependsOn: [':server:jar']) {
-    directory "./build/nodes"
-    node {
-        name "O=Notary,L=London,C=GB"
-        notary = [validating : true]
-        p2pPort 10002
-        rpcSettings {
-            address("localhost:10003")
-            adminAddress("localhost:10043")
-        }
-        //cordapps = []
-    }
-    node {
-        name "O=PartyA,L=London,C=GB"
-        p2pPort 10005
-        rpcSettings {
-            address("localhost:10006")
-            adminAddress("localhost:10046")
-        }
-        cordapps = []
-        rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
-        // Automatically run at least a single, multi-node Spring Boot instance
-        webPort 8080
-        webserverJar = "${rootProject.projectDir}/server/build/libs/server-${project.version}.jar"
-    }
-    node {
-        name "O=PartyB,L=New York,C=US"
-        p2pPort 10008
-        rpcSettings {
-            address("localhost:10009")
-            adminAddress("localhost:10049")
-        }
-        // Uncomment the following two lines to automatically launch a separate Spring Boot webserver per node
-        //webPort 10010
-        //webserverJar = "${rootProject.projectDir}/server/build/libs/server-${project.version}.jar"
-        //cordapps = []
-        rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
-    }
-    node {
-        name "O=PartyC,L=San Francisco,C=US"
-        p2pPort 10011
-        rpcSettings {
-            address("localhost:10012")
-            adminAddress("localhost:10052")
-        }
-        // Uncomment the following two lines to automatically launch a separate Spring Boot webserver per node
-        //webPort 10010
-        //webserverJar = "${rootProject.projectDir}/server/build/libs/server-${project.version}.jar"
-        //cordapps = []
-        rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
-    }
 }
