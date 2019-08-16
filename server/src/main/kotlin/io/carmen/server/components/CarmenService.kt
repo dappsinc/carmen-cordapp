@@ -50,6 +50,45 @@ class CarmenService(
         return proxy.startFlowDynamic(SendMessage::class.java, to, userId, message).returnValue.getOrThrow()
     }
 
+
+    /** Create an Application */
+    fun createApplication(applicationId: String, applicationName: String, industry: String, applicationStatus: String, partyName: String ): SignedTransaction {
+        val proxy = this.nodeRpcConnection.proxy
+
+        val matches = proxy.partiesFromName(partyName, exactMatch = true)
+        logger.debug("createAccount, peers: {}", this.peers())
+        logger.debug("createAccount, target: {}, matches: {}", partyName, matches)
+
+        val processor: Party = when {
+            matches.isEmpty() -> throw IllegalArgumentException("Target string \"$partyName\" doesn't match any nodes on the network.")
+            matches.size > 1 -> throw IllegalArgumentException("Target string \"$partyName\"  matches multiple nodes on the network.")
+            else -> matches.single()
+        }
+        // Start the flow, block and wait for the response.
+        return proxy.startFlowDynamic(CreateAccountFlow.Controller::class.java, applicationId, applicationName, industry, applicationStatus, processor).returnValue.getOrThrow()
+    }
+
+
+    /** Approve an Application! */
+    fun approveApplication(applicationId: String): SignedTransaction {
+        val proxy = this.nodeRpcConnection.proxy
+
+        // Start the flow, block and wait for the response.
+        return proxy.startFlowDynamic(ApproveApplicationFlow::class.java, applicationId).returnValue.getOrThrow()
+    }
+
+
+
+    /** Reject an Application! */
+    fun rejectApplication(applicationId: String): SignedTransaction {
+        val proxy = this.nodeRpcConnection.proxy
+
+        // Start the flow, block and wait for the response.
+        return proxy.startFlowDynamic(RejectApplicationFlow::class.java, applicationId).returnValue.getOrThrow()
+    }
+
+
+
     /** Create an Account! */
     fun createAccount(accountId: String, accountName: String, accountType: String, industry: String, phone: String, processor: String): SignedTransaction {
         val proxy = this.nodeRpcConnection.proxy

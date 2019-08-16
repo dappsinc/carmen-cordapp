@@ -47,11 +47,12 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.CrossOrigin
 import io.carmen.account.*
+import io.carmen.application.Application
 import io.carmen.case.*
 import io.carmen.contact.*
 import io.carmen.chat.*
 import io.carmen.lead.*
-
+import javax.servlet.http.HttpServletRequest
 
 
 /**
@@ -89,6 +90,20 @@ class CarmenController() {
         val nodeName = if (optionalNodeName.isPresent) optionalNodeName.get() else defaultNodeName
         return this.services.get("${nodeName}NodeService")
                 ?: throw IllegalArgumentException("Node not found: $nodeName")
+    }
+
+
+    /** Maps an Application to a JSON object. */
+
+    private fun Application.toJson(): Map<String, String> {
+        return kotlin.collections.mapOf(
+                "agent" to agent.name.organisation,
+                "provider" to provider.name.organisation,
+                "counterparty" to provider.name.toString(),
+                "applicationId" to applicationId,
+                "applicationName" to applicationName,
+                "industry" to industry,
+                "applicationStatus" to applicationStatus.toString())
     }
 
 
@@ -452,6 +467,92 @@ class CarmenController() {
         return ResponseEntity<Any?>(message, status)
     }
 
+
+
+
+
+    /** Creates an Application. */
+
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network", "localhost:8080"])
+    @PostMapping("/createApplication")
+    @ApiOperation(value = "Create Application")
+    fun createApplication(@PathVariable nodeName: Optional<String>,
+                   @RequestParam("applicationId") applicationId: String,
+                   @RequestParam("applicationName") applicationName: String,
+                   @RequestParam("industry") industry: String,
+                   @RequestParam("applicationStatus") applicationStatus: String,
+                   @RequestParam("partyName") partyName: String?): ResponseEntity<Any?> {
+
+
+        if (partyName == null) {
+            return ResponseEntity.status(TSResponse.BAD_REQUEST).body("Query parameter 'counterPartyName' missing or has wrong format.\n")
+        }
+
+
+        val (status, message) = try {
+
+            val result = getService(nodeName).createApplication(applicationId, applicationName, industry, applicationStatus, partyName)
+
+            HttpStatus.CREATED to mapOf<String, String>(
+                    "applicationd" to "$applicationId",
+                    "partyName" to "$partyName"
+            )
+
+        } catch (e: Exception) {
+            logger.error("Error sending case to ${partyName}", e)
+            e.printStackTrace()
+            HttpStatus.BAD_REQUEST to e.message
+        }
+        return ResponseEntity<Any?>(message, status)
+    }
+
+
+
+    /** Approve Application. */
+
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://camila.network"])
+    @PostMapping(value = "/approveApplication")
+    @ApiOperation(value = "Approve Application")
+    fun approveApplication(@PathVariable nodeName: Optional<String>, @RequestParam("applicationId") applicationId: String, request: HttpServletRequest): ResponseEntity<Any?> {
+        val applicationId = request.getParameter("agreementId")
+        val (status, message) = try {
+
+            val result = getService(nodeName).approveApplication(applicationId)
+
+            HttpStatus.CREATED to mapOf<String, String>(
+                    "applicationId" to "$applicationId"
+            )
+
+        } catch (e: Exception) {
+            logger.error("Error approving application ${applicationId}", e)
+            e.printStackTrace()
+            HttpStatus.BAD_REQUEST to e.message
+        }
+        return ResponseEntity<Any?>(message, status)
+    }
+
+    /** Reject Application. */
+
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://camila.network"])
+    @PostMapping(value = "/rejectApplication")
+    @ApiOperation(value = "Reject Application")
+    fun rejectApplication(@PathVariable nodeName: Optional<String>, @RequestParam("applicationId") applicationId: String, request: HttpServletRequest): ResponseEntity<Any?> {
+        val applicationId = request.getParameter("applicationId")
+        val (status, message) = try {
+
+            val result = getService(nodeName).rejectApplication(applicationId)
+
+            HttpStatus.CREATED to mapOf<String, String>(
+                    "applicationId" to "$applicationId"
+            )
+
+        } catch (e: Exception) {
+            logger.error("Error rejecting Application ${applicationId}", e)
+            e.printStackTrace()
+            HttpStatus.BAD_REQUEST to e.message
+        }
+        return ResponseEntity<Any?>(message, status)
+    }
 
 
 
