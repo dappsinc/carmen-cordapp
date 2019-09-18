@@ -9,7 +9,7 @@ Carmen is a Customer Relationship Management (CRM) network for inter-firm proces
 
 ```bash
 
-git clone https://gitlab.com/dappsinc/carmen-cordapp
+git clone https://github.com/dappsinc/carmen-cordapp
 
 ```
 
