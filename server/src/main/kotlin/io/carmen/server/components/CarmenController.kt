@@ -263,6 +263,19 @@ class CarmenController() {
     }
 
 
+    /** Returns a list of existing Applications. */
+
+
+    @CrossOrigin(origins = ["https://dapps.ngrok.io", "https://dsoa.network", "https://carmen.network", "localhost:8080"])
+    @GetMapping("/getApplications")
+    @ApiOperation(value = "Get Applications")
+    fun getApplications(@PathVariable nodeName: Optional<String>): List<Map<String, String>> {
+        val applicationStateAndRefs = this.getService(nodeName).proxy().vaultQuery(Application::class.java).states
+        val applicationStates = applicationStateAndRefs.map { it.state.data }
+        return applicationStates.map { it.toJson() }
+    }
+
+
     /** Returns a list of existing Accounts. */
 
 
