@@ -4,9 +4,9 @@ cordapp {
     targetPlatformVersion corda_platform_version.toInteger()
     minimumPlatformVersion corda_platform_version.toInteger()
     contract {
-        name "Carmen Contracts"
-        vendor "Dapps Incorporated"
-        licence "Apache License, Version 2.0"
+        name "Carmen CRM Contracts"
+        vendor "Dapps Inc."
+        licence "Open Source (Apache 2)"
         versionId 1
     }
 }

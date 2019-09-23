@@ -22,7 +22,7 @@ object ContactSchema
 
 object ContactSchemaV1 : MappedSchema(ContactSchema.javaClass, 1, listOf(PersistentContact::class.java)) {
     @Entity
-    @Table(name = "contacts", indexes = arrayOf(Index(name = "idx_contact_controller", columnList = "controller"),
+    @Table(name = "contact_states", indexes = arrayOf(Index(name = "idx_contact_controller", columnList = "controller"),
             Index(name = "idx_contact_lastName", columnList = "lastName")))
     class PersistentContact(
             @Column(name = "contactId")

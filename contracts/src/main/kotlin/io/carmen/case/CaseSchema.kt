@@ -42,7 +42,7 @@ object CaseSchema
 
 object CaseSchemaV1 : MappedSchema(schemaFamily = CaseSchema.javaClass, version = 1, mappedTypes = listOf(PersistentCase::class.java)) {
     @Entity
-    @Table(name = "leads", indexes = arrayOf(Index(name = "idx_case_resolver", columnList = "resolver"),
+    @Table(name = "case_states", indexes = arrayOf(Index(name = "idx_case_resolver", columnList = "resolver"),
             Index(name = "idx_case_caseId", columnList = "caseId")))
     class PersistentCase(
             @Column(name = "caseId")

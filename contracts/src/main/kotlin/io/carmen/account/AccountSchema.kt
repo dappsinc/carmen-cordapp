@@ -23,7 +23,7 @@ object AccountSchema
 
 object AccountSchemaV1 : MappedSchema(AccountSchema.javaClass, 1, listOf(PersistentAccount::class.java)) {
     @Entity
-    @Table(name = "accounts", indexes = arrayOf(Index(name = "idx_account_controller", columnList = "controller"),
+    @Table(name = "account_states", indexes = arrayOf(Index(name = "idx_account_controller", columnList = "controller"),
             Index(name = "idx_account_accountName", columnList = "accountName")))
     class PersistentAccount(
             @Column(name = "accountId")

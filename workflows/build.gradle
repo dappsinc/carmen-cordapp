@@ -6,9 +6,9 @@ cordapp {
     targetPlatformVersion corda_platform_version.toInteger()
     minimumPlatformVersion corda_platform_version.toInteger()
     workflow {
-        name "Carmen Workflows"
-        vendor "Dapps Incorporated"
-        licence "Apache License, Version 2.0"
+        name "Carmen CRM Workflows"
+        vendor "Dapps Inc."
+        licence "Open Source (Apache 2)"
         versionId 1
     }
 }
