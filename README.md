@@ -1,6 +1,6 @@
 # Carmen CRM CorDapp
 
-Carmen is a Customer Relationship Management (CRM) network for inter-firm process automation.
+Carmen is a Customer Relationship Management (CRM) network for inter-firm process automation. Carmen is an open source CorDapp, built on Corda.
 
 ```
 
